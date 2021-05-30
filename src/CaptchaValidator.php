@@ -3,7 +3,6 @@
  * This is NOT a freeware, use is subject to license terms
  * @copyright Copyright (c) 2010-2099 Jinan Larva Information Technology Co., Ltd.
  * @link http://www.larva.com.cn/
- * @license http://www.larva.com.cn/license/
  */
 
 namespace Larva\Captcha;
@@ -15,9 +14,9 @@ namespace Larva\Captcha;
  */
 class CaptchaValidator
 {
-    public function validate($attribute, $value, $parameters, $validator)
+    public function validate($attribute, $value, $parameters, $validator): bool
     {
-        $service = CaptchaManager::make();
+        $service = app()->make(CaptchaManager::class);
         if (config('app.env') == 'testing') {
             $service->setFixedVerifyCode(1234);
         }

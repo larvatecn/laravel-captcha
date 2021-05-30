@@ -3,11 +3,13 @@
  * This is NOT a freeware, use is subject to license terms
  * @copyright Copyright (c) 2010-2099 Jinan Larva Information Technology Co., Ltd.
  * @link http://www.larva.com.cn/
- * @license http://www.larva.com.cn/license/
  */
 
 namespace Larva\Captcha;
 
+use Exception;
+use Illuminate\Contracts\Config\Repository;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Container\Container;
 
 /**
@@ -20,14 +22,14 @@ class CaptchaManager
     /**
      * The container instance.
      *
-     * @var \Illuminate\Contracts\Container\Container
+     * @var Container
      */
     protected $container;
 
     /**
      * The configuration repository instance.
      *
-     * @var \Illuminate\Contracts\Config\Repository
+     * @var Repository
      */
     protected $config;
 
@@ -109,7 +111,7 @@ class CaptchaManager
     /**
      * CaptchaManager constructor.
      * @param Container $container
-     * @throws \Exception
+     * @throws Exception
      */
     public function __construct(Container $container)
     {
@@ -123,23 +125,15 @@ class CaptchaManager
         }
 
         if (!is_file($this->fontFile)) {
-            throw new \Exception("The font file does not exist: {$this->fontFile}");
+            throw new Exception("The font file does not exist: {$this->fontFile}");
         }
-    }
-
-    /**
-     * @return $this
-     */
-    public function make()
-    {
-        return $this;
     }
 
     /**
      * 设置静态验证码
      * @param string $code
      */
-    public function setFixedVerifyCode($code)
+    public function setFixedVerifyCode(string $code)
     {
         $this->fixedVerifyCode = $code;
     }
@@ -147,9 +141,9 @@ class CaptchaManager
     /**
      * Generates a hash code that can be used for client-side validation.
      * @param string $code the CAPTCHA code
-     * @return string a hash code generated from the CAPTCHA code
+     * @return int a hash code generated from the CAPTCHA code
      */
-    public function generateValidationHash($code)
+    public function generateValidationHash(string $code): int
     {
         for ($h = 0, $i = strlen($code) - 1; $i >= 0; --$i) {
             $h += ord($code[$i]);
@@ -161,9 +155,9 @@ class CaptchaManager
      * Gets the verification code.
      * @param bool $regenerate whether the verification code should be regenerated.
      * @return string the verification code.
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     * @throws BindingResolutionException
      */
-    public function getVerifyCode($regenerate = false)
+    public function getVerifyCode(bool $regenerate = false): string
     {
         if ($this->fixedVerifyCode !== null) {
             return $this->fixedVerifyCode;
@@ -182,9 +176,9 @@ class CaptchaManager
      * @param string $input user input
      * @param bool $caseSensitive whether the comparison should be case-sensitive
      * @return bool whether the input is valid
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     * @throws BindingResolutionException
      */
-    public function validate($input, $caseSensitive)
+    public function validate(string $input, bool $caseSensitive): bool
     {
         $code = $this->getVerifyCode();
         $valid = $caseSensitive ? ($input === $code) : strcasecmp($input, $code) === 0;
@@ -202,7 +196,7 @@ class CaptchaManager
      * Generates a new verification code.
      * @return string the generated verification code
      */
-    protected function generateVerifyCode()
+    protected function generateVerifyCode(): string
     {
         if ($this->minLength > $this->maxLength) {
             $this->maxLength = $this->minLength;
@@ -233,7 +227,7 @@ class CaptchaManager
      * Returns the session variable name used to store verification code.
      * @return string the session variable name
      */
-    protected function getSessionKey()
+    protected function getSessionKey(): string
     {
         return '__captcha';
     }
@@ -242,9 +236,9 @@ class CaptchaManager
      * Renders the CAPTCHA image.
      * @param string $code the verification code
      * @return string image contents
-     * @throws \Exception if imageLibrary is not supported
+     * @throws Exception if imageLibrary is not supported
      */
-    public function renderImage($code)
+    public function renderImage(string $code)
     {
         if (isset($this->imageLibrary)) {
             $imageLibrary = $this->imageLibrary;
@@ -257,7 +251,7 @@ class CaptchaManager
             return $this->renderImageByImagick($code);
         }
 
-        throw new \Exception("Defined library '{$imageLibrary}' is not supported");
+        throw new Exception("Defined library '{$imageLibrary}' is not supported");
     }
 
     /**
@@ -265,7 +259,7 @@ class CaptchaManager
      * @param string $code the verification code
      * @return string image contents in PNG format.
      */
-    protected function renderImageByGD($code)
+    protected function renderImageByGD(string $code)
     {
         $image = imagecreatetruecolor($this->width, $this->height);
         $backColor = imagecolorallocate(
@@ -318,7 +312,7 @@ class CaptchaManager
      * @return string image contents in PNG format.
      * @throws \ImagickException
      */
-    protected function renderImageByImagick($code)
+    protected function renderImageByImagick(string $code)
     {
         $backColor = $this->transparent ? new \ImagickPixel('transparent') : new \ImagickPixel('#' . str_pad(dechex($this->backColor), 6, 0, STR_PAD_LEFT));
         $foreColor = new \ImagickPixel('#' . str_pad(dechex($this->foreColor), 6, 0, STR_PAD_LEFT));
@@ -355,9 +349,9 @@ class CaptchaManager
      * Checks if there is graphic extension available to generate CAPTCHA images.
      * This method will check the existence of ImageMagick and GD extensions.
      * @return string the name of the graphic extension, either "imagick" or "gd".
-     * @throws \Exception if neither ImageMagick nor GD is installed.
+     * @throws Exception if neither ImageMagick nor GD is installed.
      */
-    public static function checkRequirements()
+    public static function checkRequirements(): string
     {
         if (extension_loaded('imagick')) {
             $imagickFormats = (new \Imagick())->queryFormats('PNG');
@@ -371,6 +365,6 @@ class CaptchaManager
                 return 'gd';
             }
         }
-        throw new \Exception('Either GD PHP extension with FreeType support or ImageMagick PHP extension with PNG support is required.');
+        throw new Exception('Either GD PHP extension with FreeType support or ImageMagick PHP extension with PNG support is required.');
     }
 }

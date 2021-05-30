@@ -3,13 +3,15 @@
  * This is NOT a freeware, use is subject to license terms
  * @copyright Copyright (c) 2010-2099 Jinan Larva Information Technology Co., Ltd.
  * @link http://www.larva.com.cn/
- * @license http://www.larva.com.cn/license/
  */
 
 namespace Larva\Captcha;
 
+use Exception;
 use Illuminate\Contracts\Routing\ResponseFactory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Routing\Controller as BaseController;
 
@@ -28,10 +30,13 @@ class CaptchaAction extends BaseController
     /**
      * The response factory implementation.
      *
-     * @var \Illuminate\Contracts\Routing\ResponseFactory
+     * @var ResponseFactory
      */
     protected $response;
 
+    /**
+     * @var CaptchaManager
+     */
     protected $captcha;
 
     /**
@@ -48,8 +53,8 @@ class CaptchaAction extends BaseController
     /**
      * Runs the action.
      * @param Request $request
-     * @return array|string
-     * @throws \Exception
+     * @return JsonResponse|Response
+     * @throws Exception
      */
     public function __invoke(Request $request)
     {
